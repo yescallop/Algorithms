@@ -1,4 +1,4 @@
-package cn.yescallop.puzzle;
+package cn.yescallop.algorithm.puzzle;
 
 import java.awt.*;
 import java.util.Arrays;

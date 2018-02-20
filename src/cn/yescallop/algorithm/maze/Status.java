@@ -1,4 +1,4 @@
-package cn.yescallop.maze;
+package cn.yescallop.algorithm.maze;
 
 /**
  * @author Scallop Ye
@@ -13,10 +13,10 @@ class Status {
 
     Status parent;
 
-    Status(int x, int y, int hash, int g, int m, Status parent) {
+    Status(int x, int y, int g, int m, Status parent) {
         this.x = x;
         this.y = y;
-        this.hash = hash;
+        this.hash = x << 16 | y;
         this.g = g;
         this.m = m;
         this.parent = parent;
@@ -36,6 +36,6 @@ class Status {
 
     @Override
     public boolean equals(Object obj) {
-        return ((Status) obj).x == x && ((Status) obj).y == y;
+        return this.hash == ((Status) obj).hash;
     }
 }

@@ -1,4 +1,6 @@
-package cn.yescallop.maze;
+package cn.yescallop.algorithm.maze;
+
+import cn.yescallop.algorithm.util.PriorityHashQueue;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -61,50 +63,40 @@ public class Main {
     }
 
     private static int[] findPath(int[][] matrix, int destX, int destY) {
-        Queue<Status> openQueue = new PriorityQueue<>(Comparator.comparingInt(s -> s.f));
-        Map<Integer, Status> openMap = new HashMap<>();
-        Map<Integer, Status> closedMap = new HashMap<>();
+        PriorityHashQueue<Status> openQueue = new PriorityHashQueue<>(Comparator.comparingInt(s -> s.f));
+        Set<Status> closedSet = new HashSet<>();
 
-        Status initialStatus = new Status(0, 0, 0, 0, -1, null);
+        Status initialStatus = new Status(0, 0, 0, -1, null);
         openQueue.add(initialStatus);
-        openMap.put(0, initialStatus);
 
         while (openQueue.size() > 0) {
             Status cur = openQueue.poll();
             if (cur.x == destX && cur.y == destY) {
                 return reconstructPath(cur);
             }
-            openMap.remove(cur.hash);
-            closedMap.put(cur.hash, cur);
+            closedSet.add(cur);
 
             for (int m = 0; m < 8; m++) {
                 int x = cur.x + dx[m];
                 int y = cur.y + dy[m];
                 if (x == -1 || x == matrix.length || y == -1 || y == matrix.length || matrix[y][x] == 1)
                     continue;
-                int hash = x << 16 | y;
-                int g = cur.g + 1;
-                if (openMap.containsKey(hash)) {
-                    Status other = openMap.get(hash);
-                    if (g < other.g) {
+                Status neighbor = new Status(x, y, cur.g + 1, m, cur);
+                if (closedSet.contains(neighbor))
+                    continue;
+                if (openQueue.contains(neighbor)) {
+                    Status other = openQueue.get(neighbor);
+                    if (neighbor.g < other.g) {
                         other.parent = cur;
                         other.m = m;
-                        other.g = g;
-                        other.f = g + other.h;
-                    }
-                } else if (closedMap.containsKey(hash)) {
-                    Status other = closedMap.get(hash);
-                    if (g < other.g) {
-                        other.parent = cur;
-                        other.m = m;
-                        other.g = g;
-                        other.f = g + other.h;
+                        other.g = neighbor.g;
+                        other.f = other.g + other.h;
+                        openQueue.remove(other);
+                        openQueue.add(other);
                     }
                 } else {
-                    Status neighbor = new Status(x, y, hash, g, m, cur);
                     neighbor.estimateCost(destX, destY);
                     openQueue.add(neighbor);
-                    openMap.put(hash, neighbor);
                 }
             }
         }

@@ -1,4 +1,6 @@
-package cn.yescallop.puzzle;
+package cn.yescallop.algorithm.puzzle;
+
+import cn.yescallop.algorithm.util.PriorityHashQueue;
 
 import java.awt.*;
 import java.util.*;
@@ -9,11 +11,7 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args) {
-        Status status = Status.of(5, "19,10,8,7,0\n" +
-                "4,21,22,5,13\n" +
-                "16,6,24,3,14\n" +
-                "1,11,12,15,2\n" +
-                "17,23,20,9,18");
+        Status status = Status.generate(5, 100000000, new Random());
         System.out.println(status);
         System.out.println();
 
@@ -31,52 +29,43 @@ public class Main {
             System.out.print(m);
         }
         System.out.println();
+        System.out.println(status);
     }
 
     private static int[] findPath(Status initialStatus) {
-        Queue<Status> openQueue = new PriorityQueue<>(Comparator.comparingInt(s -> s.f));
-        Map<Status, Status> openMap = new HashMap<>();
-        Map<Status, Status> closedMap = new HashMap<>();
+        PriorityHashQueue<Status> openQueue = new PriorityHashQueue<>(Comparator.comparingInt(s -> s.f));
+        Set<Status> closedSet = new HashSet<>();
 
         Point[] index = createIndex(initialStatus.size);
         initialStatus.estimateCost(index);
 
         openQueue.add(initialStatus);
-        openMap.put(initialStatus, initialStatus);
 
         while (openQueue.size() > 0) {
             Status cur = openQueue.poll();
             if (cur.h == 0) {
-                System.out.println("Searched status: " + closedMap.size());
+                System.out.println("Searched status: " + closedSet.size());
                 return reconstructPath(cur);
             }
-            openMap.remove(cur);
-            closedMap.put(cur, cur);
+            closedSet.add(cur);
 
             for (int m = 0; m < 4; m++) {
                 Status neighbor = cur.cloneWithMove(m);
-                if (neighbor == null)
+                if (neighbor == null || closedSet.contains(neighbor))
                     continue;
-                if (openMap.containsKey(neighbor)) {
-                    Status other = openMap.get(neighbor);
+                if (openQueue.contains(neighbor)) {
+                    Status other = openQueue.get(neighbor);
                     if (neighbor.g < other.g) {
                         other.parent = cur;
-                        other.m = m;
                         other.g = neighbor.g;
-                        other.f = other.g + other.h;
-                    }
-                } else if (closedMap.containsKey(neighbor)) {
-                    Status other = closedMap.get(cur);
-                    if (neighbor.g < other.g) {
-                        other.parent = cur;
                         other.m = m;
-                        other.g = neighbor.g;
                         other.f = other.g + other.h;
+                        openQueue.remove(other);
+                        openQueue.add(other);
                     }
                 } else {
                     neighbor.estimateCost(index);
                     openQueue.add(neighbor);
-                    openMap.put(neighbor, neighbor);
                 }
             }
         }
