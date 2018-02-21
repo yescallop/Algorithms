@@ -69,7 +69,7 @@ public class Main {
         Status initialStatus = new Status(0, 0, 0, -1, null);
         openQueue.add(initialStatus);
 
-        while (openQueue.size() > 0) {
+        while (openQueue.size() != 0) {
             Status cur = openQueue.poll();
             if (cur.x == destX && cur.y == destY) {
                 return reconstructPath(cur);
@@ -84,15 +84,15 @@ public class Main {
                 Status neighbor = new Status(x, y, cur.g + 1, m, cur);
                 if (closedSet.contains(neighbor))
                     continue;
-                if (openQueue.contains(neighbor)) {
-                    Status other = openQueue.get(neighbor);
+                int i = openQueue.indexOf(neighbor);
+                if (i != -1) {
+                    Status other = openQueue.get(i);
                     if (neighbor.g < other.g) {
                         other.parent = cur;
                         other.m = m;
                         other.g = neighbor.g;
                         other.f = other.g + other.h;
-                        openQueue.remove(other);
-                        openQueue.add(other);
+                        openQueue.adjust(i);
                     }
                 } else {
                     neighbor.estimateCost(destX, destY);

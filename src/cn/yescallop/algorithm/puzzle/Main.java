@@ -11,11 +11,7 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args) {
-        Status status = Status.of(5, "10,19,22,11,23\n" +
-                "9,15,5,0,21\n" +
-                "20,18,2,17,13\n" +
-                "16,12,3,4,24\n" +
-                "7,1,8,6,14");
+        Status status = Status.generate(5, 10000000, new Random());
         System.out.println(status);
         System.out.println();
 
@@ -43,7 +39,7 @@ public class Main {
 
         openQueue.add(initialStatus);
 
-        while (openQueue.size() > 0) {
+        while (openQueue.size() != 0) {
             Status cur = openQueue.poll();
             if (cur.h == 0) {
                 System.out.println("Searched status: " + closedSet.size());
@@ -55,15 +51,15 @@ public class Main {
                 Status neighbor = cur.cloneWithMove(m);
                 if (neighbor == null || closedSet.contains(neighbor))
                     continue;
-                if (openQueue.contains(neighbor)) {
-                    Status other = openQueue.get(neighbor);
+                int i = openQueue.indexOf(neighbor);
+                if (i != -1) {
+                    Status other = openQueue.get(i);
                     if (neighbor.g < other.g) {
                         other.parent = cur;
                         other.g = neighbor.g;
                         other.m = m;
                         other.f = other.g + other.h;
-                        openQueue.remove(other);
-                        openQueue.add(other);
+                        openQueue.adjust(i);
                     }
                 } else {
                     neighbor.estimateCost(index);

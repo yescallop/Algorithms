@@ -1,7 +1,6 @@
 package cn.yescallop.algorithm.util;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * A modified PriorityQueue with array index
@@ -297,7 +296,7 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
         return (size == 0) ? null : (E) queue[0];
     }
 
-    private int indexOf(Object o) {
+    public int indexOf(Object o) {
         if (o != null) {
             Integer index = elementIndex.get(o);
             return index == null ? -1 : index;
@@ -327,9 +326,21 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
     }
 
     @SuppressWarnings("unchecked")
-    public E get(Object o) {
-        int i = indexOf(o);
-        return i == -1 ? null : (E) queue[i];
+    public E get(int index) {
+        if (index < 0 || index >= size)
+            throw new ArrayIndexOutOfBoundsException();
+        return (E) queue[index];
+    }
+
+    @SuppressWarnings("unchecked")
+    public boolean adjust(int index) {
+        if (index < 0 || index >= size)
+            throw new ArrayIndexOutOfBoundsException();
+        E e = (E) queue[index];
+        siftDown(index, e);
+        if (queue[index] == e)
+            siftUp(index, e);
+        return true;
     }
 
     /**
