@@ -11,7 +11,11 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args) {
-        Status status = Status.generate(5, 100000000, new Random());
+        Status status = Status.of(5, "10,19,22,11,23\n" +
+                "9,15,5,0,21\n" +
+                "20,18,2,17,13\n" +
+                "16,12,3,4,24\n" +
+                "7,1,8,6,14");
         System.out.println(status);
         System.out.println();
 
@@ -25,11 +29,9 @@ public class Main {
 
         System.out.println("Path: ");
         for (int m : path) {
-            status.move(m);
             System.out.print(m);
         }
         System.out.println();
-        System.out.println(status);
     }
 
     private static int[] findPath(Status initialStatus) {

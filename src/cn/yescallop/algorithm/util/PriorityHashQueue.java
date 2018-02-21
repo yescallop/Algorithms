@@ -35,12 +35,6 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
     private final Comparator<? super E> comparator;
 
     /**
-     * The number of times this priority queue has been
-     * <i>structurally modified</i>.  See AbstractList for gory details.
-     */
-    int modCount = 0; // non-private to simplify nested class access
-
-    /**
      * Creates a {@code PriorityHashQueue} with the default initial
      * capacity (11) that orders its elements according to their
      * {@linkplain Comparable natural ordering}.
@@ -151,6 +145,12 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
         initFromPriorityHashQueue(c);
     }
 
+    @SuppressWarnings("unchecked")
+    public PriorityHashQueue(PriorityQueue<? extends E> c) {
+        this.comparator = (Comparator<? super E>) c.comparator();
+        initFromPriorityQueue(c);
+    }
+
     /**
      * Creates a {@code PriorityHashQueue} containing the elements in the
      * specified sorted set.   This priority queue will be ordered
@@ -168,6 +168,16 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
     public PriorityHashQueue(SortedSet<? extends E> c) {
         this.comparator = (Comparator<? super E>) c.comparator();
         initElementsFromCollection(c);
+    }
+
+    private void initFromPriorityQueue(PriorityQueue<? extends E> c) {
+        if (c.getClass() == PriorityQueue.class) {
+            this.queue = c.toArray();
+            initElementIndex();
+            this.size = c.size();
+        } else {
+            initFromCollection(c);
+        }
     }
 
     private void initFromPriorityHashQueue(PriorityHashQueue<? extends E> c) {
@@ -270,7 +280,6 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
     public boolean offer(E e) {
         if (e == null)
             throw new NullPointerException();
-        modCount++;
         int i = size;
         if (i >= queue.length)
             grow(i + 1);
@@ -317,27 +326,10 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
         }
     }
 
-    /**
-     * Version of remove using reference equality, not equals.
-     * Needed by iterator.remove.
-     *
-     * @param o element to be removed from this queue, if present
-     * @return {@code true} if removed
-     */
-    boolean removeEq(Object o) {
-        for (int i = 0; i < size; i++) {
-            if (o == queue[i]) {
-                removeAt(i);
-                return true;
-            }
-        }
-        return false;
-    }
-
     @SuppressWarnings("unchecked")
-    public E get(Object obj) {
-        Integer index = elementIndex.get(obj);
-        return index == null ? null : (E) queue[index];
+    public E get(Object o) {
+        int i = indexOf(o);
+        return i == -1 ? null : (E) queue[i];
     }
 
     /**
@@ -417,97 +409,9 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
         return a;
     }
 
-    /**
-     * Returns an iterator over the elements in this queue. The iterator
-     * does not return the elements in any particular order.
-     *
-     * @return an iterator over the elements in this queue
-     */
+    @SuppressWarnings("ConstantConditions")
     public Iterator<E> iterator() {
-        return new Itr();
-    }
-
-    private final class Itr implements Iterator<E> {
-        /**
-         * Index (into queue array) of element to be returned by
-         * subsequent call to next.
-         */
-        private int cursor = 0;
-
-        /**
-         * Index of element returned by most recent call to next,
-         * unless that element came from the forgetMeNot list.
-         * Set to -1 if element is deleted by a call to remove.
-         */
-        private int lastRet = -1;
-
-        /**
-         * A queue of elements that were moved from the unvisited portion of
-         * the heap into the visited portion as a result of "unlucky" element
-         * removals during the iteration.  (Unlucky element removals are those
-         * that require a siftup instead of a siftdown.)  We must visit all of
-         * the elements in this list to complete the iteration.  We do this
-         * after we've completed the "normal" iteration.
-         *
-         * We expect that most iterations, even those involving removals,
-         * will not need to store elements in this field.
-         */
-        private ArrayDeque<E> forgetMeNot = null;
-
-        /**
-         * Element returned by the most recent call to next iff that
-         * element was drawn from the forgetMeNot list.
-         */
-        private E lastRetElt = null;
-
-        /**
-         * The modCount value that the iterator believes that the backing
-         * Queue should have.  If this expectation is violated, the iterator
-         * has detected concurrent modification.
-         */
-        private int expectedModCount = modCount;
-
-        public boolean hasNext() {
-            return cursor < size ||
-                    (forgetMeNot != null && !forgetMeNot.isEmpty());
-        }
-
-        @SuppressWarnings("unchecked")
-        public E next() {
-            if (expectedModCount != modCount)
-                throw new ConcurrentModificationException();
-            if (cursor < size)
-                return (E) queue[lastRet = cursor++];
-            if (forgetMeNot != null) {
-                lastRet = -1;
-                lastRetElt = forgetMeNot.poll();
-                if (lastRetElt != null)
-                    return lastRetElt;
-            }
-            throw new NoSuchElementException();
-        }
-
-        public void remove() {
-            if (expectedModCount != modCount)
-                throw new ConcurrentModificationException();
-            if (lastRet != -1) {
-                E moved = PriorityHashQueue.this.removeAt(lastRet);
-                lastRet = -1;
-                if (moved == null)
-                    cursor--;
-                else {
-                    if (forgetMeNot == null)
-                        forgetMeNot = new ArrayDeque<>();
-                    forgetMeNot.add(moved);
-                }
-            } else if (lastRetElt != null) {
-                PriorityHashQueue.this.removeEq(lastRetElt);
-                lastRetElt = null;
-            } else {
-                throw new IllegalStateException();
-            }
-            expectedModCount = modCount;
-        }
+        return null;
     }
 
     public int size() {
@@ -519,7 +423,6 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
      * The queue will be empty after this call returns.
      */
     public void clear() {
-        modCount++;
         for (int i = 0; i < size; i++)
             queue[i] = null;
         elementIndex.clear();
@@ -531,13 +434,12 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
         if (size == 0)
             return null;
         int s = --size;
-        modCount++;
         E result = (E) queue[0];
         E x = (E) queue[s];
         queue[s] = null;
-        elementIndex.remove(x);
         if (s != 0)
             siftDown(0, x);
+        elementIndex.remove(result);
         return result;
     }
 
@@ -554,25 +456,19 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
      * avoid missing traversing elements.
      */
     @SuppressWarnings("unchecked")
-    private E removeAt(int i) {
+    private void removeAt(int i) {
         // assert i >= 0 && i < size;
-        modCount++;
         int s = --size;
+        elementIndex.remove(queue[i]);
         if (s == i) { // removed last element
-            elementIndex.remove(queue[i]);
             queue[i] = null;
         } else {
             E moved = (E) queue[s];
             queue[s] = null;
-            elementIndex.remove(moved);
             siftDown(i, moved);
-            if (queue[i] == moved) {
+            if (queue[i] == moved)
                 siftUp(i, moved);
-                if (queue[i] != moved)
-                    return moved;
-            }
         }
-        return null;
     }
 
     /**
@@ -702,113 +598,5 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
      */
     public Comparator<? super E> comparator() {
         return comparator;
-    }
-
-    /**
-     * Creates a <em><a href="Spliterator.html#binding">late-binding</a></em>
-     * and <em>fail-fast</em> {@link Spliterator} over the elements in this
-     * queue.
-     *
-     * <p>The {@code Spliterator} reports {@link Spliterator#SIZED},
-     * {@link Spliterator#SUBSIZED}, and {@link Spliterator#NONNULL}.
-     * Overriding implementations should document the reporting of additional
-     * characteristic values.
-     *
-     * @return a {@code Spliterator} over the elements in this queue
-     * @since 1.8
-     */
-    public final Spliterator<E> spliterator() {
-        return new PriorityHashQueueSpliterator<E>(this, 0, -1, 0);
-    }
-
-    static final class PriorityHashQueueSpliterator<E> implements Spliterator<E> {
-        /*
-         * This is very similar to ArrayList Spliterator, except for
-         * extra null checks.
-         */
-        private final PriorityHashQueue<E> pq;
-        private int index;            // current index, modified on advance/split
-        private int fence;            // -1 until first use
-        private int expectedModCount; // initialized when fence set
-
-        /** Creates new spliterator covering the given range */
-        PriorityHashQueueSpliterator(PriorityHashQueue<E> pq, int origin, int fence,
-                                 int expectedModCount) {
-            this.pq = pq;
-            this.index = origin;
-            this.fence = fence;
-            this.expectedModCount = expectedModCount;
-        }
-
-        private int getFence() { // initialize fence to size on first use
-            int hi;
-            if ((hi = fence) < 0) {
-                expectedModCount = pq.modCount;
-                hi = fence = pq.size;
-            }
-            return hi;
-        }
-
-        public PriorityHashQueueSpliterator<E> trySplit() {
-            int hi = getFence(), lo = index, mid = (lo + hi) >>> 1;
-            return (lo >= mid) ? null :
-                    new PriorityHashQueueSpliterator<E>(pq, lo, index = mid,
-                            expectedModCount);
-        }
-
-        @SuppressWarnings("unchecked")
-        public void forEachRemaining(Consumer<? super E> action) {
-            int i, hi, mc; // hoist accesses and checks from loop
-            PriorityHashQueue<E> q; Object[] a;
-            if (action == null)
-                throw new NullPointerException();
-            if ((q = pq) != null && (a = q.queue) != null) {
-                if ((hi = fence) < 0) {
-                    mc = q.modCount;
-                    hi = q.size;
-                }
-                else
-                    mc = expectedModCount;
-                if ((i = index) >= 0 && (index = hi) <= a.length) {
-                    for (E e;; ++i) {
-                        if (i < hi) {
-                            if ((e = (E) a[i]) == null) // must be CME
-                                break;
-                            action.accept(e);
-                        }
-                        else if (q.modCount != mc)
-                            break;
-                        else
-                            return;
-                    }
-                }
-            }
-            throw new ConcurrentModificationException();
-        }
-
-        public boolean tryAdvance(Consumer<? super E> action) {
-            if (action == null)
-                throw new NullPointerException();
-            int hi = getFence(), lo = index;
-            if (lo >= 0 && lo < hi) {
-                index = lo + 1;
-                @SuppressWarnings("unchecked") E e = (E)pq.queue[lo];
-                if (e == null)
-                    throw new ConcurrentModificationException();
-                action.accept(e);
-                if (pq.modCount != expectedModCount)
-                    throw new ConcurrentModificationException();
-                return true;
-            }
-            return false;
-        }
-
-        public long estimateSize() {
-            return (long) (getFence() - index);
-        }
-
-        public int characteristics() {
-            return Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.NONNULL;
-        }
     }
 }
