@@ -92,7 +92,7 @@ public class Main {
                         other.m = m;
                         other.g = neighbor.g;
                         other.f = other.g + other.h;
-                        openQueue.adjust(i);
+                        openQueue.siftUp(i, other);
                     }
                 } else {
                     neighbor.estimateCost(destX, destY);
