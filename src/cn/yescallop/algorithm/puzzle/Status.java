@@ -1,7 +1,6 @@
 package cn.yescallop.algorithm.puzzle;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.Random;
 import java.util.StringJoiner;
 
@@ -101,8 +100,8 @@ class Status {
     }
 
     void estimateCost(Point[] index) {
-        for (int y = 0; y < matrix.length; y++) {
-            for (int x = 0; x < matrix.length; x++) {
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
                 int n = matrix[y][x];
                 if (n == 0)
                     continue;
@@ -139,7 +138,17 @@ class Status {
 
     @Override
     public boolean equals(Object obj) {
-        return Arrays.deepEquals(this.matrix, ((Status) obj).matrix);
+        return equals(size, this.matrix, ((Status) obj).matrix);
+    }
+
+    private static boolean equals(int size, int[][] m1, int[][] m2) {
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (m1[i][j] != m2[i][j])
+                    return false;
+            }
+        }
+        return true;
     }
 
     @Override

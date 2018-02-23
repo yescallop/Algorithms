@@ -4,6 +4,7 @@ import cn.yescallop.algorithm.util.PriorityHashQueue;
 
 import java.awt.*;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author Scallop Ye
@@ -11,7 +12,7 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args) {
-        Status status = Status.generate(5, 10000000, new Random());
+        Status status = Status.generate(5, 10000000, ThreadLocalRandom.current());
         System.out.println(status);
         System.out.println();
 
@@ -74,7 +75,7 @@ public class Main {
                         other.g = neighbor.g;
                         other.m = m;
                         other.f = other.g + other.h;
-                        openQueue.adjust(i);
+                        openQueue.siftUp(i, other);
                     }
                 } else {
                     neighbor.estimateCost(index);

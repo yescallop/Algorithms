@@ -4,13 +4,14 @@ import java.util.*;
 
 /**
  * A modified PriorityQueue with array index
+ *
  * @author Scallop Ye
  */
 public class PriorityHashQueue<E> extends AbstractQueue<E> {
 
     private static final int DEFAULT_INITIAL_CAPACITY = 11;
 
-    Object[] queue; // non-private to simplify nested class access
+    private Object[] queue;
 
     private Map<Object, Integer> elementIndex;
 
@@ -31,7 +32,7 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
     }
 
     public PriorityHashQueue(int initialCapacity,
-                         Comparator<? super E> comparator) {
+                             Comparator<? super E> comparator) {
         // Note: This restriction of at least one is not actually needed,
         // but continues for 1.5 compatibility
         if (initialCapacity < 1)
@@ -47,13 +48,11 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
             SortedSet<? extends E> ss = (SortedSet<? extends E>) c;
             this.comparator = (Comparator<? super E>) ss.comparator();
             initElementsFromCollection(ss);
-        }
-        else if (c instanceof PriorityHashQueue<?>) {
+        } else if (c instanceof PriorityHashQueue<?>) {
             PriorityHashQueue<? extends E> pq = (PriorityHashQueue<? extends E>) c;
             this.comparator = (Comparator<? super E>) pq.comparator();
             initFromPriorityHashQueue(pq);
-        }
-        else {
+        } else {
             this.comparator = null;
             initFromCollection(c);
         }
@@ -189,20 +188,10 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
     }
 
     @SuppressWarnings("unchecked")
-    public E get(int index) {
-        if (index < 0 || index >= size)
+    public E get(int i) {
+        if (i < 0 || i >= size)
             throw new IndexOutOfBoundsException();
-        return (E) queue[index];
-    }
-
-    @SuppressWarnings("unchecked")
-    public void adjust(int index) {
-        if (index < 0 || index >= size)
-            throw new IndexOutOfBoundsException();
-        E e = (E) queue[index];
-        siftDown(index, e);
-        if (queue[index] == e)
-            siftUp(index, e);
+        return (E) queue[i];
     }
 
     public boolean contains(Object o) {
@@ -256,7 +245,7 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
     }
 
     @SuppressWarnings("unchecked")
-    private void removeAt(int i) {
+    public void removeAt(int i) {
         // assert i >= 0 && i < size;
         int s = --size;
         elementIndex.remove(queue[i]);
@@ -271,7 +260,7 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
         }
     }
 
-    private void siftUp(int k, E x) {
+    public void siftUp(int k, E x) {
         if (comparator != null)
             siftUpUsingComparator(k, x);
         else
@@ -309,7 +298,7 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
         elementIndex.put(x, k);
     }
 
-    private void siftDown(int k, E x) {
+    public void siftDown(int k, E x) {
         if (comparator != null)
             siftDownUsingComparator(k, x);
         else
@@ -318,7 +307,7 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
 
     @SuppressWarnings("unchecked")
     private void siftDownComparable(int k, E x) {
-        Comparable<? super E> key = (Comparable<? super E>)x;
+        Comparable<? super E> key = (Comparable<? super E>) x;
         int half = size >>> 1;        // loop while a non-leaf
         while (k < half) {
             int child = (k << 1) + 1; // assume left child is least
