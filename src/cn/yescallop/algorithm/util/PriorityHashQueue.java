@@ -191,14 +191,14 @@ public class PriorityHashQueue<E> extends AbstractQueue<E> {
     @SuppressWarnings("unchecked")
     public E get(int index) {
         if (index < 0 || index >= size)
-            throw new ArrayIndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException();
         return (E) queue[index];
     }
 
     @SuppressWarnings("unchecked")
     public void adjust(int index) {
         if (index < 0 || index >= size)
-            throw new ArrayIndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException();
         E e = (E) queue[index];
         siftDown(index, e);
         if (queue[index] == e)

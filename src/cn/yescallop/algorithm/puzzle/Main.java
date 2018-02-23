@@ -25,7 +25,22 @@ public class Main {
 
         System.out.println("Path: ");
         for (int m : path) {
-            System.out.print(m);
+            String s = null;
+            switch (m) {
+                case 0:
+                    s = "D";
+                    break;
+                case 1:
+                    s = "L";
+                    break;
+                case 2:
+                    s = "U";
+                    break;
+                case 3:
+                    s = "R";
+                    break;
+            }
+            System.out.print(s);
         }
         System.out.println();
     }
